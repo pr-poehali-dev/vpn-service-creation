@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,9 +6,24 @@ import Icon from '@/components/ui/icon';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const Index = () => {
   const [selectedPlan, setSelectedPlan] = useState<string>('pro');
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [selectedCountry, setSelectedCountry] = useState<string>('netherlands');
+  const [selectedProtocol, setSelectedProtocol] = useState<string>('wireguard');
+  const [connectionProgress, setConnectionProgress] = useState<number>(0);
+  const [connectionTime, setConnectionTime] = useState<number>(0);
+  const [dataTransferred, setDataTransferred] = useState<number>(0);
 
   const features = [
     {
@@ -55,6 +70,15 @@ const Index = () => {
     }
   ];
 
+  const countries = [
+    { id: 'netherlands', name: 'Нидерланды', city: 'Амстердам', flag: '🇳🇱', ping: 12 },
+    { id: 'germany', name: 'Германия', city: 'Франкфурт', flag: '🇩🇪', ping: 15 },
+    { id: 'uk', name: 'Великобритания', city: 'Лондон', flag: '🇬🇧', ping: 18 },
+    { id: 'usa', name: 'США', city: 'Нью-Йорк', flag: '🇺🇸', ping: 85 },
+    { id: 'singapore', name: 'Сингапур', city: 'Сингапур', flag: '🇸🇬', ping: 120 },
+    { id: 'japan', name: 'Япония', city: 'Токио', flag: '🇯🇵', ping: 140 },
+  ];
+
   const protocols = [
     {
       name: 'WireGuard',
@@ -89,6 +113,60 @@ const Index = () => {
       recommended: false
     }
   ];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isConnecting) {
+      interval = setInterval(() => {
+        setConnectionProgress(prev => {
+          if (prev >= 100) {
+            setIsConnecting(false);
+            setIsConnected(true);
+            return 100;
+          }
+          return prev + 10;
+        });
+      }, 200);
+    }
+    return () => clearInterval(interval);
+  }, [isConnecting]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isConnected) {
+      interval = setInterval(() => {
+        setConnectionTime(prev => prev + 1);
+        setDataTransferred(prev => prev + Math.random() * 0.5);
+      }, 1000);
+    } else {
+      setConnectionTime(0);
+      setDataTransferred(0);
+    }
+    return () => clearInterval(interval);
+  }, [isConnected]);
+
+  const handleConnect = () => {
+    if (isConnected) {
+      setIsConnected(false);
+      setConnectionProgress(0);
+    } else {
+      setIsConnecting(true);
+      setConnectionProgress(0);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatData = (mb: number) => {
+    return mb >= 1000 ? `${(mb / 1000).toFixed(2)} GB` : `${mb.toFixed(2)} MB`;
+  };
+
+  const currentCountry = countries.find(c => c.id === selectedCountry);
+  const currentProtocol = protocols.find(p => p.name.toLowerCase().includes(selectedProtocol));
 
   const faqs = [
     {
@@ -150,13 +228,20 @@ const Index = () => {
             Присоединяйтесь к миллионам пользователей по всему миру.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <Button size="lg" className="bg-gradient-to-r from-primary via-accent to-secondary hover:opacity-90 transition-opacity text-lg px-8">
+            <Button 
+              size="lg" 
+              className="bg-gradient-to-r from-primary via-accent to-secondary hover:opacity-90 transition-opacity text-lg px-8"
+              onClick={() => {
+                const demoSection = document.getElementById('demo');
+                demoSection?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <Icon name="Rocket" className="mr-2" size={20} />
-              Попробовать бесплатно
+              Попробовать демо
             </Button>
             <Button size="lg" variant="outline" className="border-primary/50 hover:bg-primary/10 text-lg px-8">
               <Icon name="Play" className="mr-2" size={20} />
-              Смотреть демо
+              Смотреть видео
             </Button>
           </div>
           
@@ -173,6 +258,188 @@ const Index = () => {
               <div className="text-4xl font-bold gradient-text mb-2">5M+</div>
               <div className="text-foreground/60">Пользователей</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/10 via-transparent to-transparent pointer-events-none" />
+        <div className="container mx-auto max-w-5xl relative z-10">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Попробуйте <span className="gradient-text">прямо сейчас</span>
+            </h2>
+            <p className="text-foreground/70 text-lg">
+              Интерактивная демонстрация работы VPN
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="glass-effect p-8">
+              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Icon name="Settings" size={24} className="text-primary" />
+                Настройки подключения
+              </h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-semibold mb-2 block">Выберите страну</label>
+                  <Select value={selectedCountry} onValueChange={setSelectedCountry} disabled={isConnected || isConnecting}>
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map(country => (
+                        <SelectItem key={country.id} value={country.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{country.flag}</span>
+                            <span>{country.name} - {country.city}</span>
+                            <Badge variant="outline" className="ml-auto text-xs">{country.ping}ms</Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold mb-2 block">Протокол</label>
+                  <Select value={selectedProtocol} onValueChange={setSelectedProtocol} disabled={isConnected || isConnecting}>
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="wireguard">WireGuard (Рекомендуется)</SelectItem>
+                      <SelectItem value="openvpn">OpenVPN</SelectItem>
+                      <SelectItem value="ikev2">IKEv2/IPSec</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {isConnecting && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-foreground/70">Подключение...</span>
+                      <span className="text-primary font-semibold">{connectionProgress}%</span>
+                    </div>
+                    <Progress value={connectionProgress} className="h-2" />
+                  </div>
+                )}
+
+                <Button 
+                  className={`w-full text-lg py-6 ${
+                    isConnected 
+                      ? 'bg-destructive hover:bg-destructive/90' 
+                      : 'bg-gradient-to-r from-primary to-secondary hover:opacity-90'
+                  }`}
+                  onClick={handleConnect}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? (
+                    <>
+                      <Icon name="Loader2" className="mr-2 animate-spin" size={24} />
+                      Подключение...
+                    </>
+                  ) : isConnected ? (
+                    <>
+                      <Icon name="Power" className="mr-2" size={24} />
+                      Отключиться
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Zap" className="mr-2" size={24} />
+                      Подключиться
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+
+            <Card className={`p-8 transition-all duration-500 ${
+              isConnected 
+                ? 'glass-effect gradient-border' 
+                : 'bg-card/50'
+            }`}>
+              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Icon name="Activity" size={24} className="text-primary" />
+                Статус подключения
+              </h3>
+
+              {!isConnected && !isConnecting ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                    <Icon name="Power" size={40} className="text-muted-foreground" />
+                  </div>
+                  <p className="text-foreground/70 text-lg">Не подключено</p>
+                  <p className="text-foreground/50 text-sm mt-2">Выберите сервер и нажмите "Подключиться"</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-background/50">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        isConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500 animate-pulse'
+                      }`} />
+                      <div>
+                        <p className="text-sm text-foreground/70">Статус</p>
+                        <p className="font-semibold">{isConnected ? 'Подключено' : 'Подключение...'}</p>
+                      </div>
+                    </div>
+                    <Icon name="CheckCircle2" className="text-green-500" size={24} />
+                  </div>
+
+                  {isConnected && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 rounded-lg bg-background/50">
+                          <p className="text-sm text-foreground/70 mb-1">Сервер</p>
+                          <p className="font-semibold flex items-center gap-2">
+                            <span className="text-2xl">{currentCountry?.flag}</span>
+                            {currentCountry?.city}
+                          </p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-background/50">
+                          <p className="text-sm text-foreground/70 mb-1">Протокол</p>
+                          <p className="font-semibold">{currentProtocol?.name.split('/')[0]}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 rounded-lg bg-background/50">
+                          <p className="text-sm text-foreground/70 mb-1">Время подключения</p>
+                          <p className="font-semibold text-xl">{formatTime(connectionTime)}</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-background/50">
+                          <p className="text-sm text-foreground/70 mb-1">Передано данных</p>
+                          <p className="font-semibold text-xl">{formatData(dataTransferred)}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon name="Shield" className="text-primary" size={20} />
+                          <p className="font-semibold">Защита активна</p>
+                        </div>
+                        <div className="space-y-1 text-sm text-foreground/70">
+                          <p className="flex items-center gap-2">
+                            <Icon name="Check" size={16} className="text-green-500" />
+                            IP-адрес скрыт
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <Icon name="Check" size={16} className="text-green-500" />
+                            Трафик зашифрован
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <Icon name="Check" size={16} className="text-green-500" />
+                            DNS защищен от утечек
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </Card>
           </div>
         </div>
       </section>
