@@ -55,6 +55,41 @@ const Index = () => {
     }
   ];
 
+  const protocols = [
+    {
+      name: 'WireGuard',
+      icon: 'Zap',
+      speed: 'Максимальная',
+      security: 'Высокая',
+      description: 'Современный протокол с передовым шифрованием и минимальной задержкой',
+      recommended: true
+    },
+    {
+      name: 'OpenVPN',
+      icon: 'Lock',
+      speed: 'Высокая',
+      security: 'Максимальная',
+      description: 'Проверенный протокол с открытым кодом и надежной защитой',
+      recommended: false
+    },
+    {
+      name: 'IKEv2/IPSec',
+      icon: 'Smartphone',
+      speed: 'Высокая',
+      security: 'Высокая',
+      description: 'Идеален для мобильных устройств, быстрое переподключение',
+      recommended: false
+    },
+    {
+      name: 'L2TP/IPSec',
+      icon: 'ShieldCheck',
+      speed: 'Средняя',
+      security: 'Средняя',
+      description: 'Базовая защита для совместимости со старыми устройствами',
+      recommended: false
+    }
+  ];
+
   const faqs = [
     {
       question: 'Что такое VPN и зачем он нужен?',
@@ -222,6 +257,54 @@ const Index = () => {
                 >
                   Выбрать план
                 </Button>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="protocols" className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
+        <div className="container mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Поддерживаемые <span className="gradient-text">протоколы</span>
+            </h2>
+            <p className="text-foreground/70 text-lg max-w-2xl mx-auto">
+              Выбирайте оптимальный протокол для ваших задач
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {protocols.map((protocol, index) => (
+              <Card 
+                key={index}
+                className={`p-6 hover:scale-105 transition-all duration-300 cursor-pointer ${
+                  protocol.recommended 
+                    ? 'glass-effect gradient-border' 
+                    : 'bg-card/50'
+                }`}
+              >
+                {protocol.recommended && (
+                  <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-primary to-accent">
+                    ⚡ Рекомендуем
+                  </Badge>
+                )}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
+                  <Icon name={protocol.icon as any} className="text-background" size={24} />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{protocol.name}</h3>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-foreground/60 text-sm">Скорость:</span>
+                    <Badge variant="outline" className="text-xs">{protocol.speed}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-foreground/60 text-sm">Безопасность:</span>
+                    <Badge variant="outline" className="text-xs">{protocol.security}</Badge>
+                  </div>
+                </div>
+                <p className="text-foreground/70 text-sm">{protocol.description}</p>
               </Card>
             ))}
           </div>
